@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Matemáticas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #F5A623;
+            --background-color: #F8F9FA;
+            --text-color: #333;
+            --card-background: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .welcome-screen {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: var(--card-background);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .flashcard-container {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .flashcard {
+            perspective: 1000px;
+            width: 100%;
+            height: 400px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--card-background);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #357ABD;
+        }
+
+        .progress {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .motivation {
+            margin-top: 20px;
+            color: var(--secondary-color);
+            font-style: italic;
+        }
+
+        .latex-content {
+            margin: 15px 0;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .flashcard {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-screen" id="welcomeScreen">
+        <h1>¡Bienvenido a Matemáticas Divertidas! 🌟</h1>
+        <p>¿Listo para una aventura matemática? Juntos vamos a explorar números y operaciones de una manera divertida y fácil.</p>
+        <p>Recuerda: cada pequeño paso es un gran logro. ¡Tú puedes!</p>
+        <button onclick="startFlashcards()">¡Iniciar Flashcards!</button>
+    </div>
+
+    <div class="flashcard-container" id="flashcardContainer">
+        <div class="flashcard" onclick="flipCard()">
+            <div class="flashcard-inner">
+                <div class="flashcard-front">
+                    <!-- El contenido se insertará dinámicamente aquí -->
+                </div>
+                <div class="flashcard-back">
+                    <!-- El contenido se insertará dinámicamente aquí -->
+                </div>
+            </div>
+        </div>
+        <div class="navigation">
+            <button onclick="previousCard()">Anterior</button>
+            <button onclick="nextCard()">Siguiente</button>
+        </div>
+        <div class="progress">
+            <span id="progressText">Tarjeta 1 de 10</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        <div class="motivation" id="motivation"></div>
+    </div>
+
+    <script>
+        const flashcards = [
+            {
+                front: {
+                    title: "Suma de Fracciones con Mismo Denominador",
+                    content: "¿Cómo sumamos fracciones que tienen el mismo denominador?"
+                },
+                back: {
+                    explanation: "¡Es más fácil de lo que piensas! Solo sumamos los numeradores y mantenemos el mismo denominador.",
+                    math: [
+                        "\\[ \\frac{a}{c} + \\frac{b}{c} = \\frac{a + b}{c} \\]",
+                        "Ejemplo: \\[ \\frac{1}{4} + \\frac{2}{4} = \\frac{3}{4} \\]"
+                    ]
+                }
+            },
+            {
+                front: {
+                    title: "Resta de Fracciones con Mismo Denominador",
+                    content: "¿Y cómo restamos fracciones con el mismo denominador?"
+                },
+                back: {
+                    explanation: "¡Muy parecido a la suma! Restamos los numeradores y el denominador permanece igual.",
+                    math: [
+                        "\\[ \\frac{a}{c} - \\frac{b}{c} = \\frac{a - b}{c} \\]",
+                        "Ejemplo: \\[ \\frac{3}{5} - \\frac{1}{5} = \\frac{2}{5} \\]"
+                    ]
+                }
+            },
+            {
+                front: {
+                    title: "Multiplicación de Fracciones",
+                    content: "¿Cómo multiplicamos dos fracciones?"
+                },
+                back: {
+                    explanation: "Multiplicamos los numeradores entre sí y los denominadores entre sí.",
+                    math: [
+                        "\\[ \\frac{a}{b} \\times \\frac{c}{d} = \\frac{a \\times c}{b \\times d} \\]",
+                        "Ejemplo: \\[ \\frac{2}{3} \\times \\frac{3}{4} = \\frac{6}{12} = \\frac{1}{2} \\]"
+                    ]
+                }
+            },
+            {
+                front: {
+                    title: "División de Fracciones",
+                    content: "¿Y cómo dividimos fracciones?"
+                },
+                back: {
+                    explanation: "Multiplicamos la primera fracción por el recíproco de la segunda.",
+                    math: [
+                        "\\[ \\frac{a}{b} \\div \\frac{c}{d} = \\frac{a}{b} \\times \\frac{d}{c} \\]",
+                        "Ejemplo: \\[ \\frac{3}{4} \\div \\frac{2}{5} = \\frac{3}{4} \\times \\frac{5}{2} = \\frac{15}{8} \\]"
+                    ]
+                }
+            },
+            {
+                front: {
+                    title: "Potenciación de Números Racionales",
+                    content: "¿Qué sucede al elevar una fracción a una potencia?"
+                },
+                back: {
+                    explanation: "Elevamos tanto el numerador como el denominador a la potencia dada.",
+                    math: [
+                        "\\[ \\left( \\frac{a}{b} \\right)^n = \\frac{a^n}{b^n} \\]",
+                        "Ejemplo: \\[ \\left( \\frac{2}{3} \\right)^2 = \\frac{2^2}{3^2} = \\frac{4}{9} \\]"
+                    ]
+                }
+            },
+            {
+                front: {
+                    title: "Radicación de Números Racionales",
+                    content: "¿Cómo encontramos la raíz de una fracción?"
+                },
+                back: {
+                    explanation: "Tomamos la raíz del numerador y del denominador por separado.",
+                    math: [
+                        "\\[ \\sqrt{\\frac{a}{b}} = \\frac{\\sqrt{a}}{\\sqrt{b}} \\]",
+                        "Ejemplo: \\[ \\sqrt{\\frac{9}{16}} = \\frac{3}{4} \\]"
+                    ]
+                }
+            },
+            {
+                front: {
+                    title: "Máximo Común Divisor (MCD)",
+                    content: "¿Qué es el MCD de dos números?"
+                },
+                back: {
+                    explanation: "Es el número más grande que divide exactamente a ambos números.",
+                    math: [
+                        "Ejemplo: El MCD de 12 y 18 es 6.",
+                        "\\[ \\text{MCD}(12, 18) = 6 \\]"
+                    ],
+                    additional: "Se usa para simplificar fracciones."
+                }
+            },
+            {
+                front: {
+                    title: "Mínimo Común Múltiplo (MCM)",
+                    content: "¿Qué es el MCM de dos números?"
+                },
+                back: {
+                    explanation: "Es el número más pequeño que es múltiplo de ambos números.",
+                    math: [
+                        "Ejemplo: El MCM de 4 y 6 es 12.",
+                        "\\[ \\text{MCM}(4, 6) = 12 \\]"
+                    ],
+                    additional: "Se usa para sumar o restar fracciones con diferente denominador."
+                }
+            },
+            {
+                front: {
+                    title: "Números Enteros (\\( \\mathbb{Z} \\))",
+                    content: "¿Qué son los números enteros?"
+                },
+                back: {
+                    explanation: "Incluyen los números naturales, sus opuestos negativos y el cero.",
+                    math: [
+                        "\\[ \\mathbb{Z} = \\{ \\ldots, -3, -2, -1, 0, 1, 2, 3, \\ldots \\} \\]"
+                    ],
+                    additional: "¡Ahora podemos contar hacia atrás y hacia adelante!"
+                }
+            },
+            {
+                front: {
+                    title: "Números Racionales (\\( \\mathbb{Q} \\))",
+                    content: "¿Qué son los números racionales?"
+                },
+                back: {
+                    explanation: "Son números que se pueden expresar como una fracción de dos enteros.",
+                    math: [
+                        "\\[ \\mathbb{Q} = \\left\\{ \\frac{a}{b} \\mid a, b \\in \\mathbb{Z}, \\ b \\neq 0 \\right\\} \\]"
+                    ],
+                    additional: "Incluyen fracciones y decimales que se repiten o terminan."
+                }
+            }
+        ];
+
+        let currentCard = 0;
+        let isFlipped = false;
+
+        function renderLatexContent(element) {
+            renderMathInElement(element, {
+                delimiters: [
+                    {left: "\\[", right: "\\]", display: true},
+                    {left: "\\(", right: "\\)", display: false},
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false}
+                ],
+                throwOnError: false,
+                output: 'html'
+            });
+        }
+
+        function showCard(index) {
+            const card = flashcards[index];
+            const front = document.querySelector('.flashcard-front');
+            const back = document.querySelector('.flashcard-back');
+            
+            // Contenido del frente
+            front.innerHTML = `
+                <h2>${card.front.title}</h2>
+                <p>${card.front.content}</p>
+            `;
+            
+            // Contenido del reverso
+            back.innerHTML = `
+                <p>${card.back.explanation}</p>
+                ${card.back.math ? card.back.math.map(formula => 
+                    `<div class="latex-content">${formula}</div>`
+                ).join('') : ''}
+                ${card.back.additional ? `<p>${card.back.additional}</p>` : ''}
+            `;
+
+            // Renderizar LaTeX en ambos lados
+            renderLatexContent(front);
+            renderLatexContent(back);
+
+            updateProgress();
+            showMotivation();
+        }
+
+        function startFlashcards() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('flashcardContainer').style.display = 'block';
+            showCard(currentCard);
+        }
+
+        function flipCard() {
+            const card = document.querySelector('.flashcard');
+            isFlipped = !isFlipped;
+            card.classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            if (currentCard < flashcards.length - 1) {
+                currentCard++;
+                if (isFlipped) {
+                    flipCard();
+                }
+                setTimeout(() => showCard(currentCard), 300);
+            }
+        }
+
+        function previousCard() {
+            if (currentCard > 0) {
+                currentCard--;
+                if (isFlipped) {
+                    flipCard();
+                }
+                setTimeout(() => showCard(currentCard), 300);
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentCard + 1) / flashcards.length) * 100;
+            document.getElementById('progressText').textContent = 
+                `Tarjeta ${currentCard + 1} de ${flashcards.length}`;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function showMotivation() {
+            const messages = [
+                "¡Excelente trabajo! 🌟",
+                "¡Vas muy bien! Sigue así 💪",
+                "¡Cada tarjeta te hace más fuerte en matemáticas! 📚",
+                "¡Eres increíble! Sigamos aprendiendo 🎯"
+            ];
+            
+            if ((currentCard + 1) % 5 === 0) {
+                document.getElementById('motivation').textContent = 
+                    messages[Math.floor(Math.random() * messages.length)];
+            } else {
+                document.getElementById('motivation').textContent = '';
+            }
+        }
+
+        // Actualiza el texto de progreso al inicio
+        document.getElementById('progressText').textContent = `Tarjeta 1 de ${flashcards.length}`;
+
+    </script>
+</body>
+</html>
